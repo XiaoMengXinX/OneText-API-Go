@@ -124,6 +124,7 @@ func main() {
 	}
 
 	http.HandleFunc("/v1", ResponseOnetext)
+	http.HandleFunc("/api", ResponseOnetext)
 	http.ListenAndServe(":8000", nil)
 
 }
