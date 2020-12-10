@@ -19,11 +19,11 @@ type onetextData []struct {
 }
 
 var (
-	onetext, hitokoto, april,  all       			onetextData
+	onetext, hitokoto, april	       			onetextData
 	i1, i2, i3, i, randNub                  		int
 	jsonByte, jsonData1, jsonData2, jsonData3		[]byte
 	err                             				error
-	jsonStr											string
+	jsonStr, textStr ,ResponseData				string
 )
 
 func dropErr(e error) {
@@ -33,31 +33,17 @@ func dropErr(e error) {
 }
 
 // FormatJSON Fucking VS Code let me add a comment
-func FormatJSON(Source string) {
-	switch {
-	case Source == "onetext":
-		all = onetext
-		i = i1
-	case Source == "hitokoto":
-		all = hitokoto
-		i = i2
-	case Source == "april":
-		all = april
-		i = i3
-	default:
-		all = onetext
-		i = i1
-	}
+func FormatJSON(source onetextData, i int) {
 	rand.Seed(time.Now().UnixNano())
 	randNub := rand.Intn(i)
-	if all[randNub].URI != "" {
+	if source[randNub].URI != "" {
 		jsonRaw := struct {
 			Text string   `json:"text"`
 			By   string   `json:"by"`
 			From string   `json:"from"`
 			Time []string `json:"time"`
 			URI  string   `json:"uri"`
-		}{all[randNub].Text, all[randNub].By, all[randNub].From, all[randNub].Time, all[randNub].URI}
+		}{source[randNub].Text, source[randNub].By, source[randNub].From, source[randNub].Time, source[randNub].URI}
 		jsonByte ,err := json.MarshalIndent(jsonRaw, "", "    ")
 		if err != nil {
 			fmt.Println(err)
@@ -70,7 +56,7 @@ func FormatJSON(Source string) {
 		By   string   `json:"by"`
 		From string   `json:"from"`
 		Time []string `json:"time"`
-	}{all[randNub].Text, all[randNub].By, all[randNub].From, all[randNub].Time}
+	}{source[randNub].Text, source[randNub].By, source[randNub].From, source[randNub].Time}
 	jsonByte ,err := json.MarshalIndent(jsonRaw, "", "    ")
 	if err != nil {
 		fmt.Println(err)
@@ -79,18 +65,58 @@ func FormatJSON(Source string) {
 	return
 }
 
+// GetText Fucking VS Code let me add a comment
+func GetText(source onetextData, i int) {
+	rand.Seed(time.Now().UnixNano())
+	randNub := rand.Intn(i)
+	textStr = source[randNub].Text
+	return
+}
+
 // ResponseOnetext Fucking VS Code let me add a comment
 func ResponseOnetext(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(r)
 	r.ParseForm()
+	fmt.Println(r)
 	fmt.Println(r.Form)
-	var Source string
+	var Source ,dataType string
+	var source onetextData
 	if _, ok := r.Form["source"];ok {
 		Source = string(r.Form["source"][0])
 	}
-	FormatJSON(Source)
-	fmt.Println(string(jsonStr))
-	fmt.Fprintf(w, strings.Replace(string(jsonStr), "%", "%%", -1))
+	if _, ok := r.Form["type"];ok {
+		dataType = string(r.Form["type"][0])
+	}
+	switch {
+	case Source == "onetext":
+		source = onetext
+		i = i1
+	case Source == "hitokoto":
+		source = hitokoto
+		i = i2
+	case Source == "april":
+		source = april
+		i = i3
+	default:
+		source = onetext
+		i = i1
+	}
+	switch {
+	case dataType == "json":
+		FormatJSON(source, i)
+		ResponseData = string(jsonStr)
+		w.Header().Set("content-type", "application/json; charset=utf-8")
+	case dataType == "text":
+		GetText(source, i)
+		ResponseData = string(textStr)
+		w.Header().Set("content-type", "application/json; charset=utf-8")
+	default:
+		FormatJSON(source, i)
+		ResponseData = string(jsonStr)
+		w.Header().Set("content-type", "text/plain; charset=utf-8")
+	}
+	w.WriteHeader(200)
+	fmt.Println(ResponseData)
+	fmt.Fprintf(w, strings.Replace(ResponseData, "%", "%%", -1))
 }
 
 func main() {
