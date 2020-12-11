@@ -73,11 +73,21 @@ func GetText(source onetextData, i int) {
 	return
 }
 
+func Response404(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("content-type", "text/html")
+	w.WriteHeader(404)
+	//http.ServeFile(w, r, "static/404.html")
+	page404, err := ioutil.ReadFile("static/404.html")
+	dropErr(err)
+	fmt.Fprintf(w, string(page404))
+}
+
 // ResponseOnetext Fucking VS Code let me add a comment
 func ResponseOnetext(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	fmt.Println(r)
 	fmt.Println(r.Form)
+
 	var Source ,dataType string
 	var source onetextData
 	if _, ok := r.Form["source"];ok {
@@ -116,11 +126,10 @@ func ResponseOnetext(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(200)
 	fmt.Println(ResponseData)
-	fmt.Fprintf(w, strings.Replace(ResponseData, "%", "%%", -1))
+	fmt.Fprintf(w, strings.Replace(ResponseData, "%", "%%", -1))	
 }
 
 func main() {
-
 	jsonFile1 := "./OneText-Library.json"
 	jsonFile2 := "./all.json"
 	jsonFile3 := "./april.json"
@@ -149,8 +158,11 @@ func main() {
 		fmt.Println(err)
 	}
 
-	http.HandleFunc("/v1", ResponseOnetext)
-	http.HandleFunc("/api", ResponseOnetext)
-	http.ListenAndServe(":8000", nil)
+	mux := http.NewServeMux()
 
+	mux.HandleFunc("/api", ResponseOnetext)
+	mux.HandleFunc("/v1", ResponseOnetext)
+	mux.HandleFunc("/", Response404)
+
+	http.ListenAndServe(":8000", mux)
 }
