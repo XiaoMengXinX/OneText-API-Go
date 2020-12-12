@@ -74,12 +74,12 @@ func GetText(source onetextData, i int) {
 }
 
 func Response404(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("content-type", "text/html")
+	//w.Header().Set("content-type", "text/html")
 	w.WriteHeader(404)
-	//http.ServeFile(w, r, "static/404.html")
 	page404, err := ioutil.ReadFile("static/404.html")
 	dropErr(err)
-	fmt.Fprintf(w, string(page404))
+	//fmt.Fprintf(w, string(page404))
+	w.Write([]byte(page404))
 }
 
 // ResponseOnetext Fucking VS Code let me add a comment
